@@ -6,9 +6,11 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'body_view/assembly.dart';
 import 'pose_transform.dart';
 import 'package:google_mlkit_commons/google_mlkit_commons.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 class pose_view extends StatefulWidget {
+
   @override
   State<StatefulWidget> createState() => _PoseDetectorViewState();
 }
@@ -20,10 +22,12 @@ class _PoseDetectorViewState extends State<pose_view> {
   bool _isBusy = false;
   CustomPaint? _customPaint;
   String? _text;
+
   @override
-  void initState() {
+  Future<void> initState() async {
     global.pose_tranform();
     super.initState();
+    process();
   }
 
   @override
@@ -37,10 +41,7 @@ class _PoseDetectorViewState extends State<pose_view> {
   }
   @override
 
-  final inputImage = InputImage.fromFilePath("assets/images/pose.jpeg");
-
   Widget build(BuildContext context) {
-    processImage(inputImage);
     return Stack(
       alignment: Alignment.center,
       fit: StackFit.expand,
@@ -51,7 +52,7 @@ class _PoseDetectorViewState extends State<pose_view> {
           decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage(
-                  'pose.jpg'),
+                  'assets/images/pose.jpeg'),
               fit: BoxFit.fill,
             ),
           ),
@@ -301,6 +302,12 @@ class _PoseDetectorViewState extends State<pose_view> {
     );
   }
 
+  void process()  {
+    Future<FilePickerResult?> result =  FilePicker.platform.pickFiles();
+    File file = File(result.files.single.path);
+    final inputImage = InputImage.fromFile(file);
+    processImage(inputImage);
+  }
   Future<void> processImage(InputImage inputImage) async {
     if (!_canProcess) return;
     if (_isBusy) return;
