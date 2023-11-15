@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:path_provider/path_provider.dart';
 import 'pose_transform.dart';
@@ -7,6 +10,11 @@ import 'package:google_mlkit_commons/google_mlkit_commons.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:io';
 List<double?> posedata=[];
+int success = 0;
+int fail = 0;
+int total = 0;
+String oreder = "start";
+String path = "/images/pose.jpeg";
 class pose_view extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _PoseDetectorViewState();
@@ -30,7 +38,7 @@ class _PoseDetectorViewState extends State<pose_view> {
       children: <Widget>[
             Positioned(
                 //復健按鈕
-                bottom: 15.0,
+                bottom: 50.0,
                 child: Container(
                   height: 80,
                   child: ElevatedButton(
@@ -41,20 +49,120 @@ class _PoseDetectorViewState extends State<pose_view> {
                       padding: EdgeInsets.all(15),
                       backgroundColor: Color.fromARGB(250, 255, 190, 52),
                     ),
-                    child: Text("Start!",
+                    child: Text("$oreder",
                         maxLines: 1,
                         style: TextStyle(
                           fontSize: 35,
                           color: Colors.white,
                         )),
                     onPressed: () {
-                      process('/images/pose.jpeg');
+                      startDE();
                       //global.Det.startd();
                     },
                   ),
-                ))
+                )
+            ),
+        Positioned(
+            bottom: 500.0,
+            child: Container(
+              height: 80,
+              child: Text("success",
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 50,
+                      color: Colors.white,
+                    )
+              ),
+            ),
+        ),
+        Positioned(
+          bottom: 450.0,
+          child: Container(
+            height: 80,
+            child: Text("$success",
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 50,
+                  color: Colors.white,
+                )
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 350.0,
+          child: Container(
+            height: 80,
+            child: Text("fail",
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 50,
+                  color: Colors.white,
+                )
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 300.0,
+          child: Container(
+            height: 80,
+            child: Text("$fail",
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 50,
+                  color: Colors.white,
+                )
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 200.0,
+          child: Container(
+            height: 80,
+            child: Text("total",
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 50,
+                  color: Colors.white,
+                )
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 150.0,
+          child: Container(
+            height: 80,
+            child: Text("$total",
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 50,
+                  color: Colors.white,
+                )
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> startDE() async {
+    var assetsFile = await DefaultAssetBundle.of(context).loadString('AssetManifest.json');
+    final Map<String, dynamic> manifestMap = json.decode(assetsFile);
+    List<String> jpg = manifestMap.keys.where((String key) => key.contains('.jpeg')).toList();
+    print(jpg[2]);
+
+    process(path);
+  }
+  bool datachecker(List<double?> posedata){
+    if (
+
+    angle(posedata[22]!,posedata[23]!,posedata[26]!,posedata[27]!,posedata[30]!,posedata[31]!)>120//手臂角度需大於
+        && posedata[31]!<(posedata[47]!)//手部須高於臀部
+
+    ){
+      return true;
+    }else{
+      return false;
+    }
   }
 
   Future<void> process(String path) async {
@@ -67,11 +175,11 @@ class _PoseDetectorViewState extends State<pose_view> {
       // to access all landmarks
       pose.landmarks.forEach((_, landmark) {
         final type = landmark.type;
-        print(type);
+        //print(type);
         final x = landmark.x;
-        print(x);
+        //print(x);
         final y = landmark.y;
-        print(y);
+        //print(y);
       });
       // to access specific landmarks
       posedata=[
@@ -110,9 +218,21 @@ class _PoseDetectorViewState extends State<pose_view> {
         pose.landmarks[PoseLandmarkType.rightFootIndex]?.x,pose.landmarks[PoseLandmarkType.rightFootIndex]?.y,//64,65
       ];
     }
-    print(posedata[0]);
-    print("load done");
+
+    if (datachecker(posedata)) {
+      setState(() {
+        success++;
+        total++;
+      });
+    }else{
+      setState(() {
+        fail++;
+        total++;
+      });
+    }
+    oreder = "done";
     poseDetector.close();
+    setState(() {});
   }
 
   Future<File> getImageFileFromAssets(String path) async {
@@ -122,6 +242,19 @@ class _PoseDetectorViewState extends State<pose_view> {
     await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
     return file;
   }
+  double distance(double x1,double y1,double x2,double y2){
+    return sqrt(pow((x1-x2).abs(),2)+pow((y1-y2).abs(),2));
+  }
 
+  double angle(double x1,double y1,double x2,double y2,double x3,double y3){
+    double vx1= x1-x2;
+    double vy1= y1-y2;
+    double vx2= x3-x2;
+    double vy2= y3-y2;
+    double porduct = vx1*vx2+vy1*vy2;
+    double result = acos(porduct/(distance(x1, y1, x2, y2)*distance(x3, y3, x2, y2)))*57.3;
+    print(result);
+    return result;
+  }
 }
 
