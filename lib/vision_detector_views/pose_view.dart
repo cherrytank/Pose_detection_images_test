@@ -24,7 +24,6 @@ class _PoseDetectorViewState extends State<pose_view> {
   }
   @override
   Widget build(BuildContext context) {
-
     return Stack(
       alignment: Alignment.center,
       fit: StackFit.expand,
