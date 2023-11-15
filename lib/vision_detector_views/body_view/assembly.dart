@@ -1,5 +1,4 @@
-export '../camera_view.dart';
-export '../painters/pose_painter.dart';
 export 'poseclass.dart';
+export '../pose_view.dart';
 
 

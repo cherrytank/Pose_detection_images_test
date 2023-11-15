@@ -1,24 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.stroke_rehabilitation_app">
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <!--SDCard写权限-->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!--SDCard读权限-->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <!--在SDCard中创建与删除文件权限-->
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
-    <application
-        android:label="stroke_rehabilitation_app"
+    package="com.example.pose_detection_images_test">
+   <application
+        android:label="pose_detection_images_test"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon"
-        android:requestLegacyExternalStorage="true"
-       >
-       <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
-           <intent-filter>
-               <action android:name="android.intent.action.BOOT_COMPLETED"/>
-               <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-           </intent-filter>
-       </receiver>
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -45,5 +30,8 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-    </application>
+       <meta-data
+           android:name="firebase_crashlytics_collection_enabled"
+           android:value="false" />
+   </application>
 </manifest>

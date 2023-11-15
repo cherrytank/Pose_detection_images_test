@@ -1,107 +1,34 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:auto_size_text/auto_size_text.dart';
-import 'body_view/assembly.dart';
+import 'package:path_provider/path_provider.dart';
 import 'pose_transform.dart';
 import 'package:google_mlkit_commons/google_mlkit_commons.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'dart:io';
-
+List<double?> posedata=[];
 class pose_view extends StatefulWidget {
-
   @override
   State<StatefulWidget> createState() => _PoseDetectorViewState();
 }
 
 class _PoseDetectorViewState extends State<pose_view> {
-  final PoseDetector _poseDetector =
-      PoseDetector(options: PoseDetectorOptions());
-  bool _canProcess = true;
-  bool _isBusy = false;
-  CustomPaint? _customPaint;
-  String? _text;
-
   @override
-  Future<void> initState() async {
+  void initState(){
     global.pose_tranform();
     super.initState();
-    process();
   }
-
   @override
   void dispose() async {
-    if(global.Det.endDetector){
-    }
-    _canProcess = false;
-    _poseDetector.close();
-    global.Det.timerbool = false; //關閉timer
     super.dispose();
   }
   @override
-
   Widget build(BuildContext context) {
+
     return Stack(
       alignment: Alignment.center,
       fit: StackFit.expand,
       children: <Widget>[
-        Container(
-          height: 120.0,
-          width: 120.0,
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(
-                  'assets/images/pose.jpeg'),
-              fit: BoxFit.fill,
-            ),
-          ),
-        ),
-      if (!global.Det.changeUI) ...[
-          Positioned(
-              //倒數計時
-              top: 180,
-              child: Container(
-                height: 120,
-                width: 100,
-                child: AutoSizeText(
-                  "${global.Det.mathText}",
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  style: TextStyle(
-                    backgroundColor: Colors.transparent,
-                    fontSize: 100,
-                    color: Colors.amber,
-                    inherit: false,
-                  ),
-                ),
-              )),
-          Positioned(
-            //開始前提醒視窗
-            bottom: 100.0,
-            child: Container(
-              width: 1000,
-              padding: EdgeInsets.all(10),
-              alignment: Alignment.center,
-              decoration: new BoxDecoration(
-                color: Color.fromARGB(132, 255, 255, 255),
-                borderRadius: BorderRadius.all(Radius.circular(20.0)),
-              ),
-              child: AutoSizeText(
-                global.Det.mindText,
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                style: TextStyle(
-                  backgroundColor: Colors.transparent,
-                  fontSize: 25,
-                  color: Colors.black,
-                  height: 1.2,
-                  inherit: false,
-                ),
-              ),
-            ),
-          ).animate().slide(duration: 500.ms),
-          if (global.Det.buttom_false)
             Positioned(
                 //復健按鈕
                 bottom: 15.0,
@@ -115,221 +42,87 @@ class _PoseDetectorViewState extends State<pose_view> {
                       padding: EdgeInsets.all(15),
                       backgroundColor: Color.fromARGB(250, 255, 190, 52),
                     ),
-                    child: AutoSizeText("Start!",
+                    child: Text("Start!",
                         maxLines: 1,
                         style: TextStyle(
                           fontSize: 35,
                           color: Colors.white,
                         )),
                     onPressed: () {
-                      global.Det.startd();
+                      process('/images/pose.jpeg');
+                      //global.Det.startd();
                     },
                   ),
-                )).animate().slide(duration: 500.ms),
-        ] else if (!global.Det.endDetector) ...[
-          Positioned(
-            //計數器UI
-            bottom: 10,
-            right: -10,
-            child: Container(
-              padding: EdgeInsets.all(10),
-              decoration: new BoxDecoration(
-                color: Color.fromARGB(250, 65, 64, 64),
-                borderRadius: BorderRadius.horizontal(
-                  left: Radius.circular(20),
-                  right: Radius.circular(0),
-                ),
-              ),
-              width: 100,
-              height: 90,
-              child: AutoSizeText(
-                "次數\n${global.Det.posecounter}/${global.Det.poseTarget}",
-                maxLines: 2,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 40,
-                  color: Color.fromARGB(250, 255, 212, 39),
-                  height: 1.2,
-                  inherit: false,
-                ),
-              ),
-            ),
-          ),
-          if (global.Det.timerui)
-            Positioned(
-              //計時器UI
-              bottom: 10,
-              left: -10,
-              child: Container(
-                padding: EdgeInsets.all(10),
-                decoration: new BoxDecoration(
-                  color: Color.fromARGB(250, 65, 64, 64),
-                  borderRadius: BorderRadius.horizontal(
-                    left: Radius.circular(0),
-                    right: Radius.circular(20),
-                  ),
-                ),
-                width: 100,
-                height: 90,
-                child: AutoSizeText(
-                  "秒數\n${global.Det.posetimecounter}/${global.Det.posetimeTarget}",
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  style: TextStyle(
-                    fontSize: 40,
-                    color: Color.fromARGB(250, 255, 212, 39),
-                    height: 1.2,
-                    inherit: false,
-                  ),
-                ),
-              ),
-            ),
-          if ((global.posenumber >= 18 && global.posenumber <= 21) ||
-              (global.posenumber >= 42 && global.posenumber <= 45)) ...[
-            Positioned(
-              //提醒視窗
-              left: 0,
-              child: Container(
-                padding: EdgeInsets.all(10),
-                decoration: new BoxDecoration(
-                  color: Color.fromARGB(250, 65, 64, 64),
-                  borderRadius: BorderRadius.horizontal(
-                    left: Radius.circular(30),
-                    right: Radius.circular(30),
-                  ),
-                ),
-                width: 90,
-                height: 300,
-                child: AutoSizeText(
-                  "${global.Det.orderText}",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 60,
-                    color: Colors.white,
-                    height: 1.2,
-                    inherit: false,
-                  ),
-                ),
-              ),
-            ).animate().slide(duration: 500.ms),
-          ] else ...[
-            Positioned(
-              //提醒視窗
-              bottom: 100,
-              child: Container(
-                padding: EdgeInsets.all(15),
-                decoration: new BoxDecoration(
-                  color: Color.fromARGB(250, 65, 64, 64),
-                  borderRadius: BorderRadius.horizontal(
-                    left: Radius.circular(30),
-                    right: Radius.circular(30),
-                  ),
-                ),
-                width: 220,
-                height: 100,
-                child: AutoSizeText(
-                  "${global.Det.orderText}",
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 50,
-                    color: Colors.white,
-                    height: 1.3,
-                    inherit: false,
-                  ),
-                ),
-              ),
-            ).animate().slide(duration: 500.ms),
-          ]
-        ],
-        if (global.Det.endDetector)
-          Positioned(
-            //退出視窗
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(40),
-                  decoration: new BoxDecoration(
-                    color: Color.fromARGB(200, 65, 64, 64),
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                  ),
-                  width: 300,
-                  height: 300,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AutoSizeText(
-                        "恭喜完成!!",
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 50,
-                          color: Colors.white,
-                          inherit: false,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(50)),
-                          ),
-                          padding: EdgeInsets.all(15),
-                          backgroundColor: Color.fromARGB(250, 255, 190, 52),
-                        ),
-                        child: AutoSizeText(
-                          "返回",
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: 30,
-                            color: Colors.white,
-                          ),
-                        ),
-                        onPressed: () async {
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ],
-                  ),
-                )
-              ],
-            ),
-          ).animate().slide(duration: 500.ms),
+                ))
       ],
     );
   }
 
-  void process()  {
-    Future<FilePickerResult?> result =  FilePicker.platform.pickFiles();
-    File file = File(result.files.single.path);
-    final inputImage = InputImage.fromFile(file);
-    processImage(inputImage);
-  }
-  Future<void> processImage(InputImage inputImage) async {
-    if (!_canProcess) return;
-    if (_isBusy) return;
-    _isBusy = true;
-    setState(() {
-      _text = '';
-    });
-    final poses = await _poseDetector.processImage(inputImage);
-    if (inputImage.metadata?.size != null &&
-        inputImage.metadata?.rotation != null) {
-      final painter = PosePainter(
-          poses, inputImage.metadata!.size, inputImage.metadata!.rotation);
-      _customPaint = CustomPaint(painter: painter);
-    } else {
-      _text = 'Poses found: ${poses.length}\n\n';
-      // TODO: set _customPaint to draw landmarks on top of image
-      _customPaint = null;
+  Future<void> process(String path) async {
+    File file = await getImageFileFromAssets(path);
+    final InputImage inputImage = InputImage.fromFile(file);
+    final options = PoseDetectorOptions();
+    final poseDetector = PoseDetector(options: options);
+    final List<Pose> poses = await poseDetector.processImage(inputImage);
+    for (Pose pose in poses) {
+      // to access all landmarks
+      pose.landmarks.forEach((_, landmark) {
+        final type = landmark.type;
+        print(type);
+        final x = landmark.x;
+        print(x);
+        final y = landmark.y;
+        print(y);
+      });
+      // to access specific landmarks
+      posedata=[
+        pose.landmarks[PoseLandmarkType.nose]?.x,pose.landmarks[PoseLandmarkType.nose]?.y,//0,1
+        pose.landmarks[PoseLandmarkType.leftEyeInner]?.x,pose.landmarks[PoseLandmarkType.leftEyeInner]?.y,//2,3
+        pose.landmarks[PoseLandmarkType.leftEye]?.x,pose.landmarks[PoseLandmarkType.leftEye]?.y,//4,5
+        pose.landmarks[PoseLandmarkType.leftEyeOuter]?.x,pose.landmarks[PoseLandmarkType.leftEyeOuter]?.y,//6,7
+        pose.landmarks[PoseLandmarkType.rightEyeInner]?.x,pose.landmarks[PoseLandmarkType.rightEyeInner]?.y,//8,9
+        pose.landmarks[PoseLandmarkType.rightEye]?.x,pose.landmarks[PoseLandmarkType.rightEye]?.y,//10,11
+        pose.landmarks[PoseLandmarkType.rightEyeOuter]?.x,pose.landmarks[PoseLandmarkType.rightEyeOuter]?.y,//12,13
+        pose.landmarks[PoseLandmarkType.leftEar]?.x,pose.landmarks[PoseLandmarkType.leftEar]?.y,//14,15
+        pose.landmarks[PoseLandmarkType.rightEar]?.x,pose.landmarks[PoseLandmarkType.rightEar]?.y,//16,17
+        pose.landmarks[PoseLandmarkType.leftMouth]?.x,pose.landmarks[PoseLandmarkType.leftMouth]?.y,//18,19
+        pose.landmarks[PoseLandmarkType.rightMouth]?.x,pose.landmarks[PoseLandmarkType.rightMouth]?.y,//20,21
+        pose.landmarks[PoseLandmarkType.leftShoulder]?.x,pose.landmarks[PoseLandmarkType.leftShoulder]?.y,//22,23
+        pose.landmarks[PoseLandmarkType.rightShoulder]?.x,pose.landmarks[PoseLandmarkType.rightShoulder]?.y,//24,25
+        pose.landmarks[PoseLandmarkType.leftElbow]?.x,pose.landmarks[PoseLandmarkType.leftElbow]?.y,//26,27
+        pose.landmarks[PoseLandmarkType.rightElbow]?.x,pose.landmarks[PoseLandmarkType.rightElbow]?.y,//28,29
+        pose.landmarks[PoseLandmarkType.leftWrist]?.x,pose.landmarks[PoseLandmarkType.leftWrist]?.y,//30,31
+        pose.landmarks[PoseLandmarkType.rightWrist]?.x,pose.landmarks[PoseLandmarkType.rightWrist]?.y,//32,33
+        pose.landmarks[PoseLandmarkType.leftPinky]?.x,pose.landmarks[PoseLandmarkType.leftPinky]?.y,//34,35
+        pose.landmarks[PoseLandmarkType.rightPinky]?.x,pose.landmarks[PoseLandmarkType.rightPinky]?.y,//36,37
+        pose.landmarks[PoseLandmarkType.leftIndex]?.x,pose.landmarks[PoseLandmarkType.leftIndex]?.y,//38,39
+        pose.landmarks[PoseLandmarkType.rightIndex]?.x,pose.landmarks[PoseLandmarkType.rightIndex]?.y,//40,41
+        pose.landmarks[PoseLandmarkType.leftThumb]?.x,pose.landmarks[PoseLandmarkType.leftThumb]?.y,//42,43
+        pose.landmarks[PoseLandmarkType.rightThumb]?.x,pose.landmarks[PoseLandmarkType.rightThumb]?.y,//44,45
+        pose.landmarks[PoseLandmarkType.leftHip]?.x,pose.landmarks[PoseLandmarkType.leftHip]?.y,//46,47
+        pose.landmarks[PoseLandmarkType.rightHip]?.x,pose.landmarks[PoseLandmarkType.rightHip]?.y,//48,49
+        pose.landmarks[PoseLandmarkType.leftKnee]?.x,pose.landmarks[PoseLandmarkType.leftKnee]?.y,//50,51
+        pose.landmarks[PoseLandmarkType.rightKnee]?.x,pose.landmarks[PoseLandmarkType.rightKnee]?.y,//52,53
+        pose.landmarks[PoseLandmarkType.leftAnkle]?.x,pose.landmarks[PoseLandmarkType.leftAnkle]?.y,//54,55
+        pose.landmarks[PoseLandmarkType.rightAnkle]?.x,pose.landmarks[PoseLandmarkType.rightAnkle]?.y,//56,57
+        pose.landmarks[PoseLandmarkType.leftHeel]?.x,pose.landmarks[PoseLandmarkType.leftHeel]?.y,//58,59
+        pose.landmarks[PoseLandmarkType.rightHeel]?.x,pose.landmarks[PoseLandmarkType.rightHeel]?.y,//60,61
+        pose.landmarks[PoseLandmarkType.leftFootIndex]?.x,pose.landmarks[PoseLandmarkType.leftFootIndex]?.y,//62,63
+        pose.landmarks[PoseLandmarkType.rightFootIndex]?.x,pose.landmarks[PoseLandmarkType.rightFootIndex]?.y,//64,65
+      ];
     }
-    _isBusy = false;
-    if (mounted) {
-      setState(() {});
-    }
+    print(posedata[0]);
+    print("load done");
+    poseDetector.close();
   }
+
+  Future<File> getImageFileFromAssets(String path) async {
+    final byteData = await rootBundle.load('assets$path');
+    final file = File('${(await getTemporaryDirectory()).path}/$path');
+    await file.create(recursive: true);
+    await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+    return file;
+  }
+
 }
 
