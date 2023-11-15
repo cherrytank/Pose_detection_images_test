@@ -14,7 +14,7 @@ int success = 0;
 int fail = 0;
 int total = 0;
 String oreder = "start";
-String path = "/images/pose.jpeg";
+//String path = "/images/pose.jpeg";
 class pose_view extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _PoseDetectorViewState();
@@ -56,6 +56,9 @@ class _PoseDetectorViewState extends State<pose_view> {
                           color: Colors.white,
                         )),
                     onPressed: () {
+                      success = 0;
+                      fail = 0;
+                      total = 0;
                       startDE();
                       //global.Det.startd();
                     },
@@ -148,15 +151,17 @@ class _PoseDetectorViewState extends State<pose_view> {
     var assetsFile = await DefaultAssetBundle.of(context).loadString('AssetManifest.json');
     final Map<String, dynamic> manifestMap = json.decode(assetsFile);
     List<String> jpg = manifestMap.keys.where((String key) => key.contains('.jpeg')).toList();
-    print(jpg[2]);
-
-    process(path);
+    for(String path in jpg){
+      String _path = path.substring(6);
+      process(_path);
+    }
   }
   bool datachecker(List<double?> posedata){
     if (
 
-    angle(posedata[22]!,posedata[23]!,posedata[26]!,posedata[27]!,posedata[30]!,posedata[31]!)>120//手臂角度需大於
-        && posedata[31]!<(posedata[47]!)//手部須高於臀部
+    angle(posedata[22]!,posedata[23]!,posedata[26]!,posedata[27]!,posedata[30]!,posedata[31]!)<120//手臂角度需大於
+        || posedata[31]!<(posedata[47]!)//手部須高於臀部
+
 
     ){
       return true;
@@ -253,7 +258,6 @@ class _PoseDetectorViewState extends State<pose_view> {
     double vy2= y3-y2;
     double porduct = vx1*vx2+vy1*vy2;
     double result = acos(porduct/(distance(x1, y1, x2, y2)*distance(x3, y3, x2, y2)))*57.3;
-    print(result);
     return result;
   }
 }
